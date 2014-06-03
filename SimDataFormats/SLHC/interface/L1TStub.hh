@@ -18,8 +18,10 @@ public:
  
   }
 
-  L1TStub(int simtrackid, int iphi, int iz, int layer, int ladder, int module, 
-	  double x, double y, double z, double sigmax, double sigmaz, double pt){
+  L1TStub(int simtrackid, int iphi, int iz, int layer, int ladder, 
+	  int module, 
+	  double x, double y, double z, double sigmax, 
+	  double sigmaz, double pt, int simtrk){
     simtrackid_=simtrackid;
     iphi_=iphi;
     iz_=iz;
@@ -32,6 +34,7 @@ public:
     sigmax_=sigmax;
     sigmaz_=sigmaz;
     pt_=pt;
+    simtrk_=simtrk;
 
   }
 
@@ -58,12 +61,14 @@ public:
     out << "Stub: " 
 	<< layer_ << "\t" 
 	<< ladder_ << "\t" 
-	<< module_ << "\t" 
+	<< module_ << "\t"
+	<< simtrk_ << "\t"
 	<< pt_ << "\t" 
 	<< x_ << "\t" 
 	<< y_ << "\t" 
 	<< z_ << "\t" << endl; 
 
+    /*
     for (unsigned int i=0;i<outerdigis_.size();i++){
       out << "OuterStackDigi: "<<outerdigis_[i].first<<"\t"
 	  << outerdigis_[i].second<<"\t"
@@ -79,6 +84,7 @@ public:
 	  << innerdigisladdermodule_[i].second
 	  <<endl;
     }
+    */
 	
   }
 
@@ -86,6 +92,8 @@ public:
     int ptsgn=-1.0;
     if (diphi()<iphiouter()) ptsgn=-ptsgn;
     if (layer_>999 && z_>0.0) ptsgn=-ptsgn; //sign fix for forward endcap
+
+    std::cout << "stubpt ptsng z " << pt_ << " " << ptsgn << " " << z_ << std::endl; 
     return ptsgn;
   }
 
@@ -170,10 +178,12 @@ public:
 
   int simtrackid() const { return simtrackid_;}
 
+  int simtrk() const { return simtrk_; }
 
 private:
 
   int simtrackid_;
+  int simtrk_;
   unsigned int iphi_;
   unsigned int iz_;
   unsigned int layer_;

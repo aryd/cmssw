@@ -20,6 +20,7 @@ using namespace std;
 //just hardcoded here.
 
 
+static double piOver2=2*atan(1.0);
 static double two_pi=8*atan(1.0);
 
 static double x_offset=0.199196*0.0;
@@ -50,7 +51,7 @@ public:
 
   void write(ofstream& out){
     
-    out << "L1SimTrack: " 
+    out << "SimTrack: " 
 	<< id_ << "\t" 
 	<< type_ << "\t" 
 	<< pt_ << "\t" 
@@ -243,7 +244,7 @@ public:
     x-=x_offset;
     y-=y_offset;
 
-    L1TStub stub(-1,-1,-1,layer, ladder, module, x, y, z, -1.0, -1.0, pt);
+    L1TStub stub(-1,-1,-1,layer, ladder, module, x, y, z, -1.0, -1.0, pt,-999);
 
     for(unsigned int i=0;i<innerStack.size();i++){
       if (innerStack[i]) {
@@ -260,7 +261,7 @@ public:
       if (fabs(stubs_[i].x()-stub.x())<0.2&&
 	  fabs(stubs_[i].y()-stub.y())<0.2&&
 	  fabs(stubs_[i].z()-stub.z())<2.0) {
-	foundclose=true;
+	foundclose=false; //never reject tracks
       }
     }
 
@@ -324,7 +325,7 @@ public:
 	mc_rinv=0.00299792*3.8/pt;
 	mc_phi0=phi;
 	mc_z0=vz;
-	mc_t=tan(0.25*two_pi-2.0*atan(exp(-eta)));
+	mc_t=tan(piOver2-2.0*atan(exp(-eta)));
 	event=eventnum_;
 	first=false;
       }
@@ -406,12 +407,13 @@ public:
       int layer;
       int ladder;
       int module;
+      int simtrk;
       double pt;
       double x;
       double y;
       double z;
 
-      in >> layer >> ladder >> module >> pt >> x >> y >> z;
+      in >> layer >> ladder >> module >> simtrk >> pt >> x >> y >> z;
 
       layer--;   
       x-=x_offset;
@@ -419,7 +421,7 @@ public:
 
       if (layer < 10) nlayer[layer]++;
 
-      L1TStub stub(-1,-1,-1,layer, ladder, module, x, y, z, -1.0, -1.0, pt);
+      L1TStub stub(-1,-1,-1,layer, ladder, module, x, y, z, -1.0, -1.0, pt, simtrk);
 
       in >> tmp;
 
@@ -456,7 +458,9 @@ public:
   }
 
   void write(ofstream& out){
-    
+
+    cout << "Writing out event:"<<eventnum_<<endl;
+
     out << "Event: "<<eventnum_ << endl;
       
     for (unsigned int i=0; i<simtracks_.size(); i++) {

@@ -53,32 +53,55 @@ class TTTrack
     void addStubRef( edm::Ref< edmNew::DetSetVector< TTStub< T > >, TTStub< T > > aStub )                  { theStubRefs.push_back( aStub ); }
     void setStubRefs( std::vector< edm::Ref< edmNew::DetSetVector< TTStub< T > >, TTStub< T > > > aStubs ) { theStubRefs = aStubs; }
 
+    /// Initialize track parameters and other member data
+    void initialize(unsigned int nPar,
+		    GlobalVector aMomentum,
+		    double aRInv,
+		    GlobalPoint aPOCA,
+		    double aChi2,
+		    double aStubPtConsistency,
+		    unsigned int aSector,
+		    unsigned int aWedge);
+
+
+    //These 'set' method should be considered obsolete and not used any
+    //more. Rather use the initialize method above. aryd - 140515
+
+    void setMomentum( GlobalVector aMomentum, unsigned int nPar=5);
+
+    void setRInv( double aRInv, unsigned int nPar=5 );
+
+    void setPOCA( GlobalPoint aPOCA, unsigned int nPar=5 );
+
+    void setSector( unsigned int aSector ) { theSector = aSector; }
+
+    void setWedge( unsigned int aWedge )   { theWedge = aWedge; }
+
+    void setChi2( double aChi2, unsigned int nPar=5 );
+
+    void setStubPtConsistency( double aPtConsistency, unsigned int nPar=5 );
+
+
     /// Track momentum
     GlobalVector getMomentum(unsigned int nPar=4) const;
-    void         setMomentum( GlobalVector aMomentum, unsigned int nPar=5);
 
     /// Track curvature
     double getRInv(unsigned int nPar=4) const;
-    void   setRInv( double aRInv, unsigned int nPar=5 );
+
 
     /// POCA
     GlobalPoint getPOCA(unsigned int nPar=4) const;
-    void        setPOCA( GlobalPoint aPOCA, unsigned int nPar=5 );
 
     /// Sector
     unsigned int getSector() const                 { return theSector; }
-    void         setSector( unsigned int aSector ) { theSector = aSector; }
     unsigned int getWedge() const                  { return theWedge; }
-    void         setWedge( unsigned int aWedge )   { theWedge = aWedge; }
 
     /// Chi2
     double       getChi2(unsigned int nPar=4) const;
     double       getChi2Red(unsigned int nPar=4) const;
-    void         setChi2( double aChi2, unsigned int nPar=5 );
 
     /// Stub Pt consistency
     double       getStubPtConsistency(unsigned int nPar=4) const;
-    void         setStubPtConsistency( double aPtConsistency, unsigned int nPar=5 );
 
     void         setFitParNo( unsigned int aFitParNo ) { return; }
 
@@ -157,6 +180,50 @@ TTTrack< T >::TTTrack( std::vector< edm::Ref< edmNew::DetSetVector< TTStub< T > 
 /// Destructor
 template< typename T >
 TTTrack< T >::~TTTrack(){}
+
+template< typename T >
+void TTTrack< T >::initialize(unsigned int nPar,
+			      GlobalVector aMomentum,
+			      double aRInv,
+			      GlobalPoint aPOCA,
+			      double aChi2,
+			      double aStubPtConsistency,
+			      unsigned int aSector,
+			      unsigned int aWedge){
+  
+  if (!checkValidArgsForSet(nPar,"initialize")){
+    return;
+  }
+  
+  if (nPar==4) {
+    valid4ParFit = true;
+    theMomentum4Par=aMomentum;
+    theRInv4Par=aRInv;
+    thePOCA4Par=aPOCA;
+    theChi24Par=aChi2;
+    theStubPtConsistency4Par=aStubPtConsistency;
+    theSector=aSector;
+    theWedge=aWedge;
+  }
+
+  if (nPar==5) {
+    valid5ParFit = true;
+    theMomentum5Par=aMomentum;
+    theRInv5Par=aRInv;
+    thePOCA5Par=aPOCA;
+    theChi25Par=aChi2;
+    theStubPtConsistency5Par=aStubPtConsistency;
+    theSector=aSector;
+    theWedge=aWedge;
+  }
+
+  return;
+
+
+};
+
+
+
 
 template< typename T >
 void TTTrack< T >::setMomentum( GlobalVector aMomentum, unsigned int nPar ) {

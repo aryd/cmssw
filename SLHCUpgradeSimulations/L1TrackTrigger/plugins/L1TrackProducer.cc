@@ -162,6 +162,8 @@ private:
 
   string geometry_;
   double phiWindowSF_;
+  string eventfilename_;
+  ofstream eventfile_;
 
   /// ///////////////// ///
   /// MANDATORY METHODS ///
@@ -180,6 +182,14 @@ L1TrackProducer::L1TrackProducer(edm::ParameterSet const& iConfig) // :   config
 
   geometry_ = iConfig.getUntrackedParameter<string>("geometry","");
   phiWindowSF_ = iConfig.getUntrackedParameter<double>("phiWindowSF",1.0);
+  eventfilename_ = iConfig.getUntrackedParameter<string>("eventfilename","");
+
+  if (eventfilename_!=""){
+    cout << "Opening event file" << endl;
+    eventfile_.open(eventfilename_.c_str());
+  }
+  
+
 }
 
 /////////////
@@ -188,6 +198,10 @@ L1TrackProducer::~L1TrackProducer()
 {
   /// Insert here what you need to delete
   /// when you close the class instance
+  if (eventfilename_!=""){
+    eventfile_.close();
+  }
+
 }  
 
 //////////
@@ -195,6 +209,7 @@ L1TrackProducer::~L1TrackProducer()
 void L1TrackProducer::endRun(const edm::Run& run, const edm::EventSetup& iSetup)
 {
   /// Things to be done at the exit of the event Loop 
+
 
 }
 
@@ -328,7 +343,15 @@ void L1TrackProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       double stubPt = theStackedGeometry->findRoughPt(mMagneticFieldStrength,stub);
 
+      //std::cout << "stubPt triggerBend() : "<<stubPt
+      //	<<" "<<stub->getTriggerBend()<<std::endl;
+
       if (stubPt>10000.0) stubPt=9999.99;
+
+      if (stub->getTriggerBend()<0.0) {
+	stubPt=-stubPt;
+      }
+
       GlobalPoint stubPosition = theStackedGeometry->findGlobalPosition(stub);
 
       StackedTrackerDetId stubDetId = stub->getDetId();
@@ -424,6 +447,11 @@ void L1TrackProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
   }
 
+  if (eventfilename_!=""){
+    std::cout << "Will write out event" << std::endl;
+    ev.write(eventfile_);
+  }
+
 
   //std::cout << "Will actually do L1 tracking:"<<std::endl;
 
@@ -459,14 +487,9 @@ void L1TrackProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     TTTrack<Ref_PixelDigi_> aTrack;
 
-    aTrack.setSector(999); //this is currently not retrained by the algorithm
-    aTrack.setWedge(999); //not used by the tracklet implementations
-
     //First do the 4 parameter fit
 
     GlobalPoint bsPosition4par(0.0,0.0,track.z04par());
-
-    aTrack.setPOCA(bsPosition4par,4);
  
     double pt4par=fabs(track.pt4par(mMagneticFieldStrength));
 
@@ -474,18 +497,13 @@ void L1TrackProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 						  track.phi04par(), 
 						  pt4par*sinh(track.eta4par())));
 
-    aTrack.setMomentum(p34par,4);
-    
-    aTrack.setRInv(track.rinv4par(),4);
-
-    aTrack.setChi2(track.chisq4par(),4);
+    aTrack.initialize(4,p34par,track.rinv4par(),bsPosition4par,
+		      track.chisq4par(),999.9,999,999);
 
 
     //Now do the 5 parameter fit
 
     GlobalPoint bsPosition5par(track.d0()*cos(track.phi0()),-track.d0()*sin(track.phi0()),track.z0());
-
-    aTrack.setPOCA(bsPosition5par,5);
  
     double pt5par=fabs(track.pt(mMagneticFieldStrength));
 
@@ -493,13 +511,8 @@ void L1TrackProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 						  track.phi0(), 
 						  pt5par*sinh(track.eta())));
 
-    aTrack.setMomentum(p35par,5);
-    
-    aTrack.setRInv(track.rinv(),5);
-
-    aTrack.setChi2(track.chisq(),5);
-
-
+    aTrack.initialize(5,p35par,track.rinv(),bsPosition5par,
+		      track.chisq(),999.9,999,999);
 
     
     
